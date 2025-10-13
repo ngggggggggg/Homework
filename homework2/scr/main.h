@@ -1,8 +1,8 @@
 #include <iostream>
 using namespace std;
 
-void ps(int S[], int n, int sub[], int sz, int idx) {
-    if (idx == n) {
+void ps(int S[], int n, int sub[], int sz, int id) {
+    if (id == n) {
         cout << "{";
         for (int i = 0; i < sz; ++i) {
             cout << sub[i];
@@ -11,9 +11,9 @@ void ps(int S[], int n, int sub[], int sz, int idx) {
         cout << "}" << endl;
         return;
     }
-    ps(S, n, sub, sz, idx + 1);
-    sub[sz] = S[idx];
-    ps(S, n, sub, sz + 1, idx + 1);
+    ps(S, n, sub, sz, id + 1);
+    sub[sz] = S[id];
+    ps(S, n, sub, sz + 1, id + 1);
 }
 
 int main() {
