@@ -22,18 +22,27 @@
 #include <iostream>
 using namespace std;
 
-int sigma(int n) {
-    if (n < 0)
-        throw "n < 0";
-    else if (n <= 1)
-        return n;
-    return n + sigma(n - 1);
+int ack(int m, int n) {
+    if (m == 0) {
+        return n + 1;
+    } else if (n == 0) {
+        return ack(m - 1, 1);
+    } else {
+        return ack(m - 1, ack(m, n - 1));
+    }
+}
+int main() {
+    int m, n;
+    cout << "Enter m and n: ";
+    cin >> m >> n;
+  if (m < 0 || n < 0) {
+        cout << "輸入錯誤：m 和 n 必須是 >= 0 的整數。" << endl;
+        return 1;
+}
+    cout << "Ackermann(" << m << ", " << n << ") = " << ack(m, n) << endl;
+    return 0;
 }
 
-int main() {
-    int result = sigma(3);
-    cout << result << '\n';
-}
 ```
 
 ## 效能分析
@@ -45,13 +54,14 @@ int main() {
 
 ### 測試案例
 
-| 測試案例 | 輸入參數 $n$ | 預期輸出 | 實際輸出 |
-|----------|--------------|----------|----------|
-| 測試一   | $n = 0$      | 0        | 0        |
-| 測試二   | $n = 1$      | 1        | 1        |
-| 測試三   | $n = 3$      | 6        | 6        |
-| 測試四   | $n = 5$      | 15       | 15       |
-| 測試五   | $n = -1$     | 異常拋出 | 異常拋出 |
+| 測試案例 | 輸入參數 $m$, $n$ | 預期輸出       | 實際輸出       |
+|----------|--------------------|----------------|----------------|
+| 測試一   | $m = 0$, $n = 0$    | $1$            | $1$            |
+| 測試二   | $m = 1$, $n = 1$    | $3$            | $3$            |
+| 測試三   | $m = 2$, $n = 3$    | $9$            | $9$            |
+| 測試四   | $m = 3$, $n = 2$    | $29$           | $29$           |
+| 測試五   | $m = -1$, $n = 2$   | 輸入錯誤提示   | 輸入錯誤提示   |
+
 
 ### 編譯與執行指令
 
