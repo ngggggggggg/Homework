@@ -2,51 +2,53 @@
 #include <cmath>
 using namespace std;
 
-// ------------------ Term 類別 ------------------
 class Term {
     friend class Polynomial;
-    friend std::ostream& operator<<(std::ostream&, const Polynomial&);
+    friend ostream& operator<<(ostream&, const Polynomial&);
 private:
-    float coef;  // 係數
-    int exp;     // 指數
+    float coef;
+    int exp;
 };
 
-// ------------------ Polynomial 類別 ------------------
 class Polynomial {
-    friend istream& operator>>(istream& in, Polynomial& poly);
-    friend ostream& operator<<(ostream& out, const Polynomial& poly);
+    friend istream& operator>>(istream&, Polynomial&);
+    friend ostream& operator<<(ostream&, const Polynomial&);
 
 private:
-    Term* termArray;   // 儲存多項式的項
-    int capacity;      // 陣列容量
-    int terms;         // 實際項數
+    Term* termArray;
+    int capacity;
+    int terms;
 
 public:
-    // 建構子
     Polynomial() {
         capacity = 10;
         terms = 0;
         termArray = new Term[capacity];
     }
 
-    // ✅ 解構子：釋放動態記憶體
-    ~Polynomial() {
-        delete[] termArray;
+    Polynomial(const Polynomial& other) {
+        capacity = other.capacity;
+        terms = other.terms;
+        termArray = new Term[capacity];
+        for (int i = 0; i < terms; i++)
+            termArray[i] = other.termArray[i];
     }
 
-    // 新增一個項目 (自動合併同次項 + 排序)
+    ~Polynomial() { delete[] termArray; }
+
     void NewTerm(float c, int e) {
         if (c == 0) return;
-
-        // 檢查是否已有相同次方 → 合併
         for (int i = 0; i < terms; i++) {
             if (termArray[i].exp == e) {
                 termArray[i].coef += c;
+                if (termArray[i].coef == 0) {
+                    for (int j = i; j < terms - 1; j++)
+                        termArray[j] = termArray[j + 1];
+                    terms--;
+                }
                 return;
             }
         }
-
-        // 若容量滿了 → 擴充陣列
         if (terms == capacity) {
             capacity *= 2;
             Term* temp = new Term[capacity];
@@ -55,13 +57,9 @@ public:
             delete[] termArray;
             termArray = temp;
         }
-
-        // 新增項目
         termArray[terms].coef = c;
         termArray[terms].exp = e;
         terms++;
-
-        // 按指數遞減排序
         for (int i = 0; i < terms - 1; i++) {
             for (int j = i + 1; j < terms; j++) {
                 if (termArray[i].exp < termArray[j].exp)
@@ -70,7 +68,43 @@ public:
         }
     }
 
-    // 計算多項式值 p(x)
+    Polynomial Add(Polynomial poly) {
+        Polynomial result;
+        int i = 0, j = 0;
+        while (i < terms && j < poly.terms) {
+            if (termArray[i].exp == poly.termArray[j].exp) {
+                float sum = termArray[i].coef + poly.termArray[j].coef;
+                if (sum != 0) result.NewTerm(sum, termArray[i].exp);
+                i++; j++;
+            }
+            else if (termArray[i].exp > poly.termArray[j].exp) {
+                result.NewTerm(termArray[i].coef, termArray[i].exp);
+                i++;
+            }
+            else {
+                result.NewTerm(poly.termArray[j].coef, poly.termArray[j].exp);
+                j++;
+            }
+        }
+        for (; i < terms; i++)
+            result.NewTerm(termArray[i].coef, termArray[i].exp);
+        for (; j < poly.terms; j++)
+            result.NewTerm(poly.termArray[j].coef, poly.termArray[j].exp);
+        return result;
+    }
+
+    Polynomial Mult(Polynomial poly) {
+        Polynomial result;
+        for (int i = 0; i < terms; i++) {
+            for (int j = 0; j < poly.terms; j++) {
+                float c = termArray[i].coef * poly.termArray[j].coef;
+                int e = termArray[i].exp + poly.termArray[j].exp;
+                result.NewTerm(c, e);
+            }
+        }
+        return result;
+    }
+
     float Eval(float x) const {
         float result = 0;
         for (int i = 0; i < terms; i++)
@@ -79,37 +113,29 @@ public:
     }
 };
 
-// ------------------ operator>> (輸入多項式) ------------------
 istream& operator>>(istream& in, Polynomial& poly) {
     int n;
-    cout << "Enter number of terms: ";
+    cout << "請輸入項數: ";
     in >> n;
-
-    poly.terms = 0; // 清空原本內容
-
+    poly.terms = 0;
     for (int i = 0; i < n; i++) {
         float c;
         int e;
-        cout << "Enter coefficient and exponent for term " << i + 1 << ": ";
+        cout << "請輸入第 " << i + 1 << " 項的係數與指數: ";
         in >> c >> e;
         poly.NewTerm(c, e);
     }
-
     return in;
 }
 
-// ------------------ operator<< (輸出多項式) ------------------
 ostream& operator<<(ostream& out, const Polynomial& poly) {
     if (poly.terms == 0) {
         out << "0";
         return out;
     }
-
     for (int i = 0; i < poly.terms; i++) {
         float c = poly.termArray[i].coef;
         int e = poly.termArray[i].exp;
-
-        // 處理正負號
         if (i > 0) {
             if (c >= 0) out << " + ";
             else { out << " - "; c = -c; }
@@ -118,8 +144,6 @@ ostream& operator<<(ostream& out, const Polynomial& poly) {
             out << "-";
             c = -c;
         }
-
-        // 處理格式
         if (e == 0)
             out << c;
         else if (e == 1)
@@ -127,26 +151,29 @@ ostream& operator<<(ostream& out, const Polynomial& poly) {
         else
             out << c << "x^" << e;
     }
-
     return out;
 }
 
-// ------------------ 主程式測試 ------------------
 int main() {
-    Polynomial p;
+    Polynomial p1, p2;
+    cout << "輸入第一個多項式:\n";
+    cin >> p1;
+    cout << "輸入第二個多項式:\n";
+    cin >> p2;
 
-    // 輸入多項式
-    cin >> p;
+    cout << "p1(x) = " << p1 << endl;
+    cout << "p2(x) = " << p2 << endl;
 
-    // 顯示多項式
-    cout << "p(x) = " << p << endl;
+    Polynomial sum = p1.Add(p2);
+    Polynomial product = p1.Mult(p2);
 
-    // 輸入 x 並計算 p(x)
+    cout << "p1(x) + p2(x) = " << sum << endl;
+    cout << "p1(x) * p2(x) = " << product << endl;
+
     float x;
-    cout << "Enter x value: ";
+    cout << "請輸入 x 的值: ";
     cin >> x;
-    cout << "p(" << x << ") = " << p.Eval(x) << endl;
-
+    cout << "p1(" << x << ") = " << p1.Eval(x) << endl;
+    cout << "p2(" << x << ") = " << p2.Eval(x) << endl;
     return 0;
 }
-
