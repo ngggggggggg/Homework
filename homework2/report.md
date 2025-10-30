@@ -43,6 +43,7 @@ capacity 和 terms 負責管理大小，建構子設容量 10，解構子釋放�
 輸入兩多項式，顯示後計算加法與乘法，再輸入 x 求各自代入值。
 
 ## 程式實作
+```cpp
 #include <iostream>
 #include <cmath>
 using namespace std;
@@ -222,7 +223,7 @@ int main() {
     cout << "p2(" << x << ") = " << p2.Eval(x) << endl;
     return 0;
 }
-
+```
 ## 效能分析
 **資料結構與排序影響**:
 多項式以動態陣列儲存非零項，每項包含係數與指數。當容量不足時會自動倍增，平均新增效率為 O(1)如需重新配置記憶體，時間為 O(n)。
